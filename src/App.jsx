@@ -20,7 +20,11 @@ const App = () => {
   const [isPWAInstalled, setIsPWAInstalled] = useState(false);
   const [showPWAInstall, setShowPWAInstall] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [sidebarWidth, setSidebarWidth] = useState(320);
+  const [isResizing, setIsResizing] = useState(false);
   const exportButtonRef = useRef(null);
+  const sidebarRef = useRef(null);
+  const resizeHandleRef = useRef(null);
 
   // PWA and offline status management
   useEffect(() => {
@@ -74,6 +78,41 @@ const App = () => {
       window.removeEventListener('appinstalled', handleAppInstalled);
     };
   }, []);
+
+  // Sidebar resizing functionality
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (!isResizing) return;
+      
+      const newWidth = e.clientX;
+      if (newWidth >= 240 && newWidth <= 600) {
+        setSidebarWidth(newWidth);
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+
+    if (isResizing) {
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing]);
+
+  const handleResizeStart = (e) => {
+    e.preventDefault();
+    setIsResizing(true);
+  };
 
   // Sync offline data when coming back online
   const syncOfflineData = useCallback(async () => {
@@ -789,7 +828,15 @@ const App = () => {
         {sidebarVisible ? '✕' : '☰'}
       </button>
 
-      <div className={`sidebar ${sidebarVisible ? '' : 'hidden'}`}>
+      <div 
+        ref={sidebarRef}
+        className={`sidebar ${sidebarVisible ? '' : 'hidden'}`}
+        style={{
+          width: isMobile ? '100%' : `${sidebarWidth}px`,
+          maxWidth: isMobile ? '100%' : '600px',
+          minWidth: isMobile ? '100%' : '240px'
+        }}
+      >
         <div className="sidebar-header">
           <div className="status-indicators">
             {!isOnline && (
@@ -948,9 +995,43 @@ const App = () => {
           onDuplicateFile={duplicateFile}
           onRenameFile={renameFile}
         />
+        
+        {/* Resize handle for desktop */}
+        {!isMobile && sidebarVisible && (
+          <div
+            ref={resizeHandleRef}
+            className="sidebar-resize-handle"
+            onMouseDown={handleResizeStart}
+            style={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              width: '4px',
+              height: '100%',
+              background: 'transparent',
+              cursor: 'col-resize',
+              borderRight: '1px solid transparent',
+              transition: 'border-color 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.borderColor = '#0078ff';
+            }}
+            onMouseLeave={(e) => {
+              if (!isResizing) {
+                e.target.style.borderColor = 'transparent';
+              }
+            }}
+          />
+        )}
       </div>
 
-      <div className={`main-content ${!sidebarVisible ? 'sidebar-hidden' : ''}`}>
+      <div 
+        className={`main-content ${!sidebarVisible ? 'sidebar-hidden' : ''}`}
+        style={{
+          marginLeft: sidebarVisible && !isMobile ? `${sidebarWidth}px` : 0,
+          transition: 'margin-left 0.3s ease'
+        }}
+      >
         <div className="excalidraw-container">
           <Excalidraw
             key={currentFile?.id || 'empty'}
@@ -972,6 +1053,64 @@ const App = () => {
       />
       
       <ToastContainer />
+      
+      {/* PWA Install Button for Browser */}
+      {showPWAInstall && !isPWAInstalled && !isMobile && (
+        <div
+          className="pwa-install-floating"
+          style={{
+            position: 'fixed',
+            bottom: '20px',
+            right: '20px',
+            zIndex: 10000,
+            background: 'linear-gradient(135deg, #0066cc, #0078ff)',
+            border: '1px solid #0066cc',
+            borderRadius: '12px',
+            padding: '12px 16px',
+            boxShadow: '0 8px 32px rgba(0,102,204,0.4)',
+            animation: 'slideInUp 0.3s ease',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}
+        >
+          <button
+            onClick={handlePWAInstall}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'white',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '500',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: 0
+            }}
+          >
+            📱 Install App
+          </button>
+          <button
+            onClick={dismissPWAInstall}
+            style={{
+              background: 'rgba(255, 255, 255, 0.2)',
+              border: 'none',
+              color: 'white',
+              width: '20px',
+              height: '20px',
+              borderRadius: '50%',
+              cursor: 'pointer',
+              fontSize: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            ×
+          </button>
+        </div>
+      )}
     </div>
   );
 };
