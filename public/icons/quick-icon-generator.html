@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Quick PWA Icon Creator</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f0f0f0; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; }
+        button { padding: 15px 30px; font-size: 16px; margin: 10px; cursor: pointer; border: none; border-radius: 5px; }
+        .generate { background: #4CAF50; color: white; }
+        .download { background: #2196F3; color: white; }
+        .progress { margin: 20px 0; padding: 15px; background: #e7f3ff; border-radius: 5px; }
+        .icon-preview { display: inline-block; margin: 10px; text-align: center; }
+        .icon-preview canvas { border: 1px solid #ddd; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Quick PWA Icon Creator</h1>
+        <p>Generate all required PWA icons instantly!</p>
+        
+        <button class="generate" onclick="generateAllIcons()">Generate All PWA Icons</button>
+        <button class="download" onclick="downloadAll()" id="downloadBtn" style="display:none;">Download All Icons</button>
+        
+        <div class="progress" id="progress">Ready to generate icons...</div>
+        
+        <div id="iconContainer"></div>
+    </div>
+
+    <script>
+        const sizes = [72, 96, 128, 144, 152, 180, 192, 384, 512];
+        const canvases = {};
+
+        function createIcon(size) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            
+            // Background
+            ctx.fillStyle = '#1e1e1e';
+            ctx.fillRect(0, 0, size, size);
+            
+            // Inner area
+            const padding = size * 0.1;
+            ctx.fillStyle = '#2d2d2d';
+            ctx.fillRect(padding, padding, size - padding * 2, size - padding * 2);
+            
+            // Drawing area
+            const drawPadding = size * 0.15;
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(drawPadding, drawPadding + size * 0.1, size - drawPadding * 2, size * 0.6);
+            
+            // Simple drawing elements
+            const scale = size / 512;
+            ctx.strokeStyle = '#0066cc';
+            ctx.lineWidth = 4 * scale;
+            ctx.beginPath();
+            ctx.arc(size * 0.35, size * 0.4, size * 0.06, 0, 2 * Math.PI);
+            ctx.stroke();
+            
+            ctx.strokeStyle = '#ff6b6b';
+            ctx.strokeRect(size * 0.5, size * 0.5, size * 0.15, size * 0.1);
+            
+            // Title (for larger sizes)
+            if (size >= 128) {
+                ctx.fillStyle = '#ffffff';
+                ctx.font = `bold ${size/20}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.fillText('Excalidraw', size/2, size * 0.15);
+            }
+            
+            return canvas;
+        }
+
+        function generateAllIcons() {
+            const container = document.getElementById('iconContainer');
+            const progress = document.getElementById('progress');
+            container.innerHTML = '';
+            
+            progress.textContent = 'Generating PWA icons...';
+            
+            sizes.forEach((size, index) => {
+                setTimeout(() => {
+                    const canvas = createIcon(size);
+                    canvases[size] = canvas;
+                    
+                    const preview = document.createElement('div');
+                    preview.className = 'icon-preview';
+                    preview.innerHTML = `
+                        <div>${size}×${size}</div>
+                        ${canvas.outerHTML}
+                        <br>
+                        <button onclick="downloadIcon(${size})">Download</button>
+                    `;
+                    container.appendChild(preview);
+                    
+                    progress.textContent = `Generated ${index + 1}/${sizes.length} icons`;
+                    
+                    if (index === sizes.length - 1) {
+                        progress.innerHTML = '<strong>✅ All icons generated!</strong> Ready for download.';
+                        document.getElementById('downloadBtn').style.display = 'inline-block';
+                    }
+                }, index * 100);
+            });
+        }
+
+        function downloadIcon(size) {
+            const canvas = canvases[size];
+            const link = document.createElement('a');
+            link.download = `icon-${size}x${size}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        function downloadAll() {
+            sizes.forEach((size, index) => {
+                setTimeout(() => downloadIcon(size), index * 200);
+            });
+        }
+
+        // Auto-generate on load
+        window.onload = () => setTimeout(generateAllIcons, 500);
+    </script>
+</body>
+</html>

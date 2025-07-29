@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excalidraw PWA Icon Generator - Enhanced</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        .icon-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .icon-card {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            transition: transform 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+        .icon-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+        canvas {
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            background: white;
+            margin: 10px 0;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        button {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            margin: 5px;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        .download-all {
+            background: linear-gradient(45deg, #FF6B6B, #FF5252);
+            font-size: 16px;
+            padding: 15px 30px;
+            margin: 20px auto;
+            display: block;
+        }
+        .instructions {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            border-left: 5px solid #4CAF50;
+        }
+        .size-label {
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            color: #FFD700;
+        }
+        .progress {
+            margin: 20px 0;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        .usage-info {
+            font-size: 0.9em;
+            color: #E0E0E0;
+            margin-top: 10px;
+        }
+        .auto-generate {
+            background: linear-gradient(45deg, #9C27B0, #673AB7);
+        }
+        .preview-section {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Excalidraw PWA Icon Generator</h1>
+        
+        <div class="instructions">
+            <h3>📋 Instructions:</h3>
+            <ol>
+                <li>Icons will generate automatically when page loads</li>
+                <li>Download icons individually or use "Download All" button</li>
+                <li>Replace the placeholder PNG files in your icons folder</li>
+                <li>Icons are optimized for PWA requirements</li>
+                <li>All major PWA icon sizes are included</li>
+            </ol>
+        </div>
+
+        <div class="preview-section">
+            <h3>🖼️ Icon Preview</h3>
+            <canvas id="previewCanvas" width="128" height="128"></canvas>
+            <div class="usage-info">This is how your PWA icon will look</div>
+        </div>
+
+        <button class="download-all auto-generate" onclick="generateAllIcons()">🚀 Generate All PWA Icons</button>
+        
+        <div class="progress" id="progress">Ready to generate icons...</div>
+        
+        <div class="icon-grid" id="iconGrid"></div>
+        
+        <button class="download-all" onclick="downloadAllIcons()" id="downloadAllBtn" style="display: none;">
+            📦 Download All Icons
+        </button>
+
+        <div class="instructions">
+            <h3>📱 PWA Icon Usage:</h3>
+            <ul>
+                <li><strong>72×72, 96×96, 128×128, 144×144:</strong> Android home screen & splash</li>
+                <li><strong>152×152, 180×180:</strong> iOS home screen & Safari</li>
+                <li><strong>192×192, 384×384, 512×512:</strong> Android Chrome & PWA manifest</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const iconSizes = [72, 96, 128, 144, 152, 180, 192, 384, 512];
+        const generatedIcons = {};
+        
+        function drawExcalidrawIcon(canvas, size) {
+            const ctx = canvas.getContext('2d');
+            const dpr = window.devicePixelRatio || 1;
+            
+            // Set actual size for high-DPI displays
+            canvas.width = size * dpr;
+            canvas.height = size * dpr;
+            canvas.style.width = size + 'px';
+            canvas.style.height = size + 'px';
+            ctx.scale(dpr, dpr);
+            
+            ctx.clearRect(0, 0, size, size);
+            
+            const scale = size / 512;
+            ctx.save();
+            ctx.scale(scale, scale);
+            
+            // Enable antialiasing
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            
+            // Background with rounded corners
+            ctx.fillStyle = '#1e1e1e';
+            roundRect(ctx, 0, 0, 512, 512, 64);
+            ctx.fill();
+            
+            // Inner container with subtle gradient
+            const gradient = ctx.createLinearGradient(0, 0, 512, 512);
+            gradient.addColorStop(0, '#2d2d2d');
+            gradient.addColorStop(1, '#1a1a1a');
+            ctx.fillStyle = gradient;
+            roundRect(ctx, 32, 32, 448, 448, 32);
+            ctx.fill();
+            
+            // Drawing canvas with shadow
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+            ctx.shadowBlur = 8;
+            ctx.shadowOffsetY = 4;
+            ctx.fillStyle = '#ffffff';
+            roundRect(ctx, 64, 96, 384, 320, 16);
+            ctx.fill();
+            
+            // Reset shadow
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetY = 0;
+            
+            // Canvas border
+            ctx.strokeStyle = '#404040';
+            ctx.lineWidth = 4;
+            roundRect(ctx, 64, 96, 384, 320, 16);
+            ctx.stroke();
+            
+            // Drawing elements with better styling
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            
+            // Circle with glow effect
+            ctx.shadowColor = '#0066cc';
+            ctx.shadowBlur = 6;
+            ctx.strokeStyle = '#0066cc';
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.arc(180, 200, 32, 0, 2 * Math.PI);
+            ctx.stroke();
+            
+            // Rectangle with glow
+            ctx.shadowColor = '#ff6b6b';
+            ctx.strokeStyle = '#ff6b6b';
+            ctx.beginPath();
+            roundRect(ctx, 240, 240, 80, 60, 8);
+            ctx.stroke();
+            
+            // Arrow with glow
+            ctx.shadowColor = '#4ecdc4';
+            ctx.strokeStyle = '#4ecdc4';
+            ctx.beginPath();
+            ctx.moveTo(140, 280);
+            ctx.lineTo(200, 320);
+            ctx.moveTo(200, 320);
+            ctx.lineTo(185, 305);
+            ctx.moveTo(200, 320);
+            ctx.lineTo(215, 305);
+            ctx.stroke();
+            
+            // Curved line with glow
+            ctx.shadowColor = '#ff9f43';
+            ctx.strokeStyle = '#ff9f43';
+            ctx.beginPath();
+            ctx.moveTo(280, 160);
+            ctx.quadraticCurveTo(320, 140, 360, 160);
+            ctx.quadraticCurveTo(380, 170, 400, 180);
+            ctx.stroke();
+            
+            // Reset shadow
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+            
+            // Toolbar with gradient
+            const toolbarGradient = ctx.createLinearGradient(96, 360, 96, 392);
+            toolbarGradient.addColorStop(0, '#4a4a4a');
+            toolbarGradient.addColorStop(1, '#2a2a2a');
+            ctx.fillStyle = toolbarGradient;
+            roundRect(ctx, 96, 360, 320, 32, 16);
+            ctx.fill();
+            
+            // Tool icons in toolbar with better spacing
+            ctx.fillStyle = '#0066cc';
+            ctx.beginPath();
+            ctx.arc(130, 376, 6, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            ctx.fillStyle = '#ff6b6b';
+            roundRect(ctx, 160, 370, 12, 12, 2);
+            ctx.fill();
+            
+            // Line tool icon
+            ctx.strokeStyle = '#4ecdc4';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(195, 372);
+            ctx.lineTo(215, 380);
+            ctx.stroke();
+            
+            // Text tool icon
+            ctx.fillStyle = '#ff9f43';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('T', 245, 381);
+            
+            // App title (only for larger sizes)
+            if (size >= 96) {
+                ctx.fillStyle = '#ffffff';
+                const fontSize = Math.max(12, size / 20);
+                ctx.font = `bold ${fontSize}px Arial, sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+                ctx.shadowBlur = 2;
+                ctx.fillText('Excalidraw', 256, 80);
+                ctx.shadowColor = 'transparent';
+                ctx.shadowBlur = 0;
+            }
+            
+            ctx.restore();
+        }
+        
+        function roundRect(ctx, x, y, width, height, radius) {
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.arcTo(x + width, y, x + width, y + height, radius);
+            ctx.arcTo(x + width, y + height, x, y + height, radius);
+            ctx.arcTo(x, y + height, x, y, radius);
+            ctx.arcTo(x, y, x + width, y, radius);
+            ctx.closePath();
+        }
+        
+        function createIconCard(size) {
+            const card = document.createElement('div');
+            card.className = 'icon-card';
+            
+            // Determine usage context
+            let usage = '';
+            if (size <= 144) usage = 'Android Home Screen';
+            else if (size <= 180) usage = 'iOS Home Screen';
+            else usage = 'PWA Manifest';
+            
+            card.innerHTML = `
+                <div class="size-label">${size}×${size}</div>
+                <canvas width="${size}" height="${size}" id="canvas-${size}"></canvas>
+                <div class="usage-info">${usage}</div>
+                <button onclick="downloadIcon(${size})">📥 Download PNG</button>
+                <button onclick="viewFullSize(${size})" style="background: linear-gradient(45deg, #2196F3, #1976D2);">🔍 View Full Size</button>
+            `;
+            return card;
+        }
+        
+        function generateAllIcons() {
+            const grid = document.getElementById('iconGrid');
+            const progress = document.getElementById('progress');
+            grid.innerHTML = '';
+            
+            progress.textContent = '⚡ Generating high-quality PWA icons...';
+            
+            // Generate preview first
+            const previewCanvas = document.getElementById('previewCanvas');
+            drawExcalidrawIcon(previewCanvas, 128);
+            
+            iconSizes.forEach((size, index) => {
+                setTimeout(() => {
+                    const card = createIconCard(size);
+                    grid.appendChild(card);
+                    
+                    const canvas = document.getElementById(`canvas-${size}`);
+                    drawExcalidrawIcon(canvas, size);
+                    
+                    // Store the generated icon
+                    generatedIcons[size] = canvas.toDataURL('image/png', 1.0);
+                    
+                    progress.textContent = `✨ Generated ${index + 1} of ${iconSizes.length} icons (${size}×${size})`;
+                    
+                    if (index === iconSizes.length - 1) {
+                        progress.innerHTML = '🎉 <strong>All PWA icons generated successfully!</strong><br>Ready for download and PWA integration';
+                        document.getElementById('downloadAllBtn').style.display = 'block';
+                    }
+                }, index * 300);
+            });
+        }
+        
+        function downloadIcon(size) {
+            const canvas = document.getElementById(`canvas-${size}`);
+            const link = document.createElement('a');
+            link.download = `icon-${size}x${size}.png`;
+            link.href = canvas.toDataURL('image/png', 1.0);
+            link.click();
+            
+            // Show download feedback
+            const progress = document.getElementById('progress');
+            const originalText = progress.innerHTML;
+            progress.innerHTML = `📥 Downloaded icon-${size}x${size}.png`;
+            setTimeout(() => {
+                progress.innerHTML = originalText;
+            }, 2000);
+        }
+        
+        function viewFullSize(size) {
+            const canvas = document.getElementById(`canvas-${size}`);
+            const newWindow = window.open('', '_blank');
+            newWindow.document.write(`
+                <html>
+                    <head><title>Excalidraw Icon ${size}×${size}</title></head>
+                    <body style="margin: 0; background: #f0f0f0; display: flex; justify-content: center; align-items: center; min-height: 100vh;">
+                        <img src="${canvas.toDataURL('image/png', 1.0)}" style="max-width: 90vw; max-height: 90vh; box-shadow: 0 4px 20px rgba(0,0,0,0.3); border-radius: 10px;">
+                    </body>
+                </html>
+            `);
+        }
+        
+        function downloadAllIcons() {
+            let downloadCount = 0;
+            const progress = document.getElementById('progress');
+            
+            iconSizes.forEach((size, index) => {
+                setTimeout(() => {
+                    downloadIcon(size);
+                    downloadCount++;
+                    progress.innerHTML = `📦 Downloading... ${downloadCount}/${iconSizes.length} icons`;
+                    
+                    if (downloadCount === iconSizes.length) {
+                        setTimeout(() => {
+                            progress.innerHTML = '✅ <strong>All icons downloaded!</strong><br>Check your Downloads folder and move them to your PWA icons directory';
+                        }, 1000);
+                    }
+                }, index * 500); // Stagger downloads
+            });
+        }
+        
+        // Auto-generate icons on page load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                generateAllIcons();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

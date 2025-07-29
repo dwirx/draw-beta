@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PWA Install Controls Demo</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            color: white;
+        }
+        
+        .demo-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .demo-title {
+            text-align: center;
+            font-size: 32px;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+        
+        .demo-section {
+            margin-bottom: 40px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+        
+        .demo-section h3 {
+            color: #ffeb3b;
+            margin-bottom: 15px;
+        }
+        
+        .button-demo {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        /* PWA Install Button Demo */
+        .pwa-install-btn-demo {
+            background: linear-gradient(135deg, #0066cc, #0078ff);
+            border: none;
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,102,204,0.3);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .pwa-install-btn-demo:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,102,204,0.4);
+        }
+        
+        /* Control buttons demo */
+        .control-btn-demo {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(10px);
+            line-height: 1;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .control-btn-demo:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+        
+        .minimize-expanded {
+            width: 40px !important;
+            height: 40px !important;
+            font-size: 18px !important;
+        }
+        
+        .demo-live {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        
+        .status-indicator {
+            background: rgba(0, 255, 0, 0.2);
+            border: 1px solid rgba(0, 255, 0, 0.5);
+            color: #00ff00;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            margin: 10px 0;
+        }
+        
+        .code-block {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+        
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .feature-list li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+        
+        .feature-list li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #4caf50;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <h1 class="demo-title">🔧 PWA Install Controls Demo</h1>
+        
+        <div class="demo-section">
+            <h3>📱 Normal State - Full Install Button</h3>
+            <p>Tombol install dengan semua controls terlihat:</p>
+            <div class="button-demo">
+                <button class="pwa-install-btn-demo">📱 Install App</button>
+                <button class="control-btn-demo" title="Minimize">−</button>
+                <button class="control-btn-demo" title="Close">×</button>
+            </div>
+            <div class="status-indicator">State: Normal - All controls visible</div>
+        </div>
+        
+        <div class="demo-section">
+            <h3>🔽 Minimized State - Only Icon</h3>
+            <p>Setelah user click minimize, hanya icon yang terlihat:</p>
+            <div class="button-demo">
+                <button class="control-btn-demo minimize-expanded" title="Expand install prompt">📱</button>
+            </div>
+            <div class="status-indicator">State: Minimized - Click 📱 to restore</div>
+        </div>
+        
+        <div class="demo-section">
+            <h3>❌ Closed State - Hidden</h3>
+            <p>Setelah user click close, tombol tersembunyi untuk sesi:</p>
+            <div class="button-demo">
+                <em style="color: #ccc;">No buttons visible (hidden for session)</em>
+            </div>
+            <div class="status-indicator" style="background: rgba(255, 0, 0, 0.2); border-color: rgba(255, 0, 0, 0.5); color: #ff6b6b;">State: Closed - Refresh to show again</div>
+        </div>
+        
+        <div class="demo-section">
+            <h3>⚡ Features Implemented</h3>
+            <ul class="feature-list">
+                <li>5 second delay before showing install prompt</li>
+                <li>Close button (×) hides prompt for current session</li>
+                <li>Minimize button (−) shrinks to small icon</li>
+                <li>Restore functionality by clicking minimized icon</li>
+                <li>Smooth hover animations and transitions</li>
+                <li>Session storage to remember user preferences</li>
+                <li>Smart reminder after 2 minutes when minimized</li>
+                <li>Mobile-friendly touch targets</li>
+                <li>Glassmorphism design with backdrop blur</li>
+                <li>Non-intrusive user experience</li>
+            </ul>
+        </div>
+        
+        <div class="demo-section">
+            <h3>💻 Implementation Code</h3>
+            <p>Key functions implemented in <code>src/pwa.js</code>:</p>
+            <div class="code-block">
+showInstallButton() - Creates container with controls
+minimizeInstallButton() - Toggle minimize/restore 
+hideInstallButton() - Close with session storage
+setupInstallPrompt() - Smart timing and reminders
+            </div>
+        </div>
+        
+        <div class="demo-section">
+            <h3>🧪 Testing Instructions</h3>
+            <ol style="color: #fff; line-height: 1.6;">
+                <li>Run: <code>test-install-controls.bat</code></li>
+                <li>Wait 5 seconds for install button to appear</li>
+                <li>Test hover effects on all buttons</li>
+                <li>Click minimize (−) button → should become 📱 icon</li>
+                <li>Click 📱 icon → should restore full buttons</li>
+                <li>Click close (×) button → should hide completely</li>
+                <li>Refresh page → button should reappear</li>
+                <li>Test on mobile for touch experience</li>
+            </ol>
+        </div>
+    </div>
+    
+    <!-- Live Demo -->
+    <div class="demo-live">
+        <div class="button-demo" id="liveDemo">
+            <button class="pwa-install-btn-demo" onclick="demoInstall()">📱 Install App</button>
+            <button class="control-btn-demo" onclick="demoMinimize()" title="Minimize">−</button>
+            <button class="control-btn-demo" onclick="demoClose()" title="Close">×</button>
+        </div>
+    </div>
+    
+    <script>
+        let isMinimized = false;
+        
+        function demoInstall() {
+            alert('🎉 Install demo clicked!\n\nIn real app, this would trigger PWA installation.');
+        }
+        
+        function demoMinimize() {
+            const demo = document.getElementById('liveDemo');
+            const buttons = demo.querySelectorAll('button');
+            
+            if (!isMinimized) {
+                // Minimize
+                buttons[0].style.display = 'none'; // Install button
+                buttons[2].style.display = 'none'; // Close button
+                buttons[1].innerHTML = '📱';
+                buttons[1].title = 'Expand install prompt';
+                buttons[1].classList.add('minimize-expanded');
+                isMinimized = true;
+                
+                // Show notification
+                showNotification('Install prompt minimized. Click 📱 to restore.');
+            } else {
+                // Restore
+                buttons[0].style.display = 'block';
+                buttons[2].style.display = 'flex';
+                buttons[1].innerHTML = '−';
+                buttons[1].title = 'Minimize';
+                buttons[1].classList.remove('minimize-expanded');
+                isMinimized = false;
+            }
+        }
+        
+        function demoClose() {
+            const demo = document.getElementById('liveDemo');
+            demo.style.opacity = '0';
+            demo.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                demo.style.display = 'none';
+                showNotification('Install prompt closed for this session. Refresh to show again.');
+            }, 300);
+        }
+        
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: rgba(0, 0, 0, 0.8);
+                color: white;
+                padding: 12px 16px;
+                border-radius: 8px;
+                font-size: 14px;
+                z-index: 10001;
+                animation: slideIn 0.3s ease;
+            `;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+        
+        // Add animation keyframes
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+<!-- SVG Icon for PWA (you can replace this with proper icons) -->
+<svg width="192" height="192" viewBox="0 0 192 192" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="192" height="192" rx="24" fill="#1e1e1e"/>
+  <rect x="16" y="16" width="160" height="160" rx="16" fill="#2d2d2d"/>
+  <circle cx="96" cy="80" r="20" fill="#0066cc"/>
+  <rect x="56" y="120" width="80" height="8" rx="4" fill="#0066cc"/>
+  <rect x="40" y="140" width="112" height="8" rx="4" fill="#404040"/>
+  <path d="M60 60 L80 80 L120 40" stroke="#0066cc" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>
