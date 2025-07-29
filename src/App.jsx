@@ -18,6 +18,8 @@ const App = () => {
   const [sidebarClosing, setSidebarClosing] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isPWAInstalled, setIsPWAInstalled] = useState(false);
+  const [showPWAInstall, setShowPWAInstall] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
   const exportButtonRef = useRef(null);
 
   // PWA and offline status management
@@ -33,19 +35,43 @@ const App = () => {
       showToast('You are offline. Your work will be saved locally.', 'warning');
     };
 
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowPWAInstall(true);
+    };
+
+    const handleAppInstalled = () => {
+      setIsPWAInstalled(true);
+      setShowPWAInstall(false);
+      setDeferredPrompt(null);
+      showToast('App installed successfully!', 'success');
+    };
+
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
 
     // Check if PWA is installed
     if (window.matchMedia('(display-mode: standalone)').matches ||
         window.navigator.standalone ||
         document.referrer.includes('android-app://')) {
       setIsPWAInstalled(true);
+    } else {
+      // Show install button after a delay if not installed
+      setTimeout(() => {
+        if (!isPWAInstalled && !sessionStorage.getItem('pwa-install-dismissed')) {
+          setShowPWAInstall(true);
+        }
+      }, 10000);
     }
 
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
     };
   }, []);
 
@@ -703,6 +729,37 @@ const App = () => {
     setShowExportDropdown(!showExportDropdown);
   };
 
+  const handlePWAInstall = async () => {
+    if (!deferredPrompt) {
+      // Show manual install instructions
+      showToast('Please use your browser menu to install this app (Add to Home Screen)', 'info');
+      return;
+    }
+
+    try {
+      deferredPrompt.prompt();
+      const result = await deferredPrompt.userChoice;
+      
+      if (result.outcome === 'accepted') {
+        showToast('Installing app...', 'info');
+      } else {
+        showToast('Install cancelled', 'info');
+      }
+      
+      setDeferredPrompt(null);
+      setShowPWAInstall(false);
+    } catch (error) {
+      console.error('Install error:', error);
+      showToast('Install failed. Please try using your browser menu.', 'error');
+    }
+  };
+
+  const dismissPWAInstall = () => {
+    setShowPWAInstall(false);
+    sessionStorage.setItem('pwa-install-dismissed', 'true');
+    showToast('Install prompt dismissed for this session', 'info');
+  };
+
   return (
     <div className="app-container">
       {/* Overlay for mobile when sidebar is open - only show on mobile */}
@@ -744,6 +801,48 @@ const App = () => {
               <span className="pwa-indicator" title="Running as installed app">
                 📱 PWA
               </span>
+            )}
+            {showPWAInstall && !isPWAInstalled && (
+              <div className="pwa-install-prompt" style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '4px',
+                background: 'rgba(0, 120, 255, 0.2)',
+                padding: '4px 8px',
+                borderRadius: '4px',
+                border: '1px solid rgba(0, 120, 255, 0.4)'
+              }}>
+                <button 
+                  onClick={handlePWAInstall}
+                  style={{
+                    background: '#0078ff',
+                    border: 'none',
+                    color: 'white',
+                    padding: '4px 8px',
+                    borderRadius: '3px',
+                    fontSize: '10px',
+                    cursor: 'pointer',
+                    fontWeight: '500'
+                  }}
+                  title="Install app for offline access"
+                >
+                  📱 Install
+                </button>
+                <button 
+                  onClick={dismissPWAInstall}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#999',
+                    fontSize: '12px',
+                    cursor: 'pointer',
+                    padding: '2px'
+                  }}
+                  title="Dismiss install prompt"
+                >
+                  ×
+                </button>
+              </div>
             )}
             <StorageInfo />
           </div>

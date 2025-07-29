@@ -56,10 +56,10 @@ class PWAManager {
       e.preventDefault();
       this.deferredPrompt = e;
       
-      // Delay showing install button to avoid being intrusive
+      // Show install button immediately when available
       setTimeout(() => {
         this.showInstallButton();
-      }, 5000); // Show after 5 seconds
+      }, 2000); // Show after 2 seconds
     });
 
     // Listen for successful installation
@@ -69,6 +69,14 @@ class PWAManager {
       this.hideInstallButton();
       this.showToast('App installed successfully! You can now use it offline.', 'success');
     });
+
+    // Check periodically if install is available (for browsers that don't fire beforeinstallprompt immediately)
+    setTimeout(() => {
+      if (!this.isInstalled && !this.deferredPrompt && !sessionStorage.getItem('pwa-install-dismissed')) {
+        // Show manual install instructions
+        this.showManualInstallButton();
+      }
+    }, 10000); // After 10 seconds
 
     // Re-show minimized install prompt after some time
     setInterval(() => {
@@ -142,14 +150,166 @@ class PWAManager {
       this.deferredPrompt = null;
       this.hideInstallButton();
       
-      return result.outcome === 'accepted';
-    } catch (error) {
-      console.error('PWA: Error showing install prompt', error);
-      return false;
-    }
+    return result.outcome === 'accepted';
+  } catch (error) {
+    console.error('PWA: Error showing install prompt', error);
+    return false;
   }
+}
 
-  handleServiceWorkerUpdate() {
+showManualInstallButton() {
+  // Show manual install button for browsers that don't support beforeinstallprompt
+  let installContainer = document.getElementById('pwa-install-container');
+  
+  if (!installContainer) {
+    installContainer = document.createElement('div');
+    installContainer.id = 'pwa-install-container';
+    installContainer.style.cssText = `
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.3s ease;
+    `;
+    
+    const installBtn = document.createElement('button');
+    installBtn.id = 'pwa-install-btn';
+    installBtn.className = 'btn secondary pwa-install-btn';
+    installBtn.innerHTML = '📱 Install App';
+    installBtn.style.cssText = `
+      background: linear-gradient(135deg, #0066cc, #0078ff);
+      border: 1px solid #0066cc;
+      color: white;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,102,204,0.3);
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+      border: none;
+      outline: none;
+      position: relative;
+    `;
+    
+    const closeBtn = document.createElement('button');
+    closeBtn.id = 'pwa-install-close';
+    closeBtn.innerHTML = '×';
+    closeBtn.title = 'Hide install prompt';
+    closeBtn.style.cssText = `
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(10px);
+      line-height: 1;
+      padding: 0;
+      margin: 0;
+      outline: none;
+    `;
+    
+    // Add event listeners
+    installBtn.addEventListener('click', () => {
+      this.showManualInstallInstructions();
+    });
+    
+    closeBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.hideInstallButton();
+      sessionStorage.setItem('pwa-install-dismissed', 'true');
+    });
+    
+    installContainer.appendChild(installBtn);
+    installContainer.appendChild(closeBtn);
+    document.body.appendChild(installContainer);
+  }
+  
+  // Show the button
+  installContainer.style.display = 'flex';
+  setTimeout(() => {
+    installContainer.style.opacity = '1';
+    installContainer.style.transform = 'translateY(0)';
+  }, 100);
+}
+
+showManualInstallInstructions() {
+  // Create instruction modal
+  const modal = document.createElement('div');
+  modal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20000;
+  `;
+  
+  const content = document.createElement('div');
+  content.style.cssText = `
+    background: #2d2d2d;
+    color: white;
+    padding: 24px;
+    border-radius: 12px;
+    max-width: 400px;
+    margin: 20px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  `;
+  
+  content.innerHTML = `
+    <h3 style="margin-top: 0; color: #0078ff;">📱 Install Excalidraw</h3>
+    <p>To install this app:</p>
+    <ul style="margin: 16px 0; padding-left: 20px;">
+      <li><strong>Chrome/Edge:</strong> Click the 📱 icon in the address bar</li>
+      <li><strong>Firefox:</strong> Look for "Install" option in the menu</li>
+      <li><strong>Safari:</strong> Tap the Share button → "Add to Home Screen"</li>
+      <li><strong>Mobile:</strong> Use browser menu → "Add to Home Screen"</li>
+    </ul>
+    <p style="font-size: 14px; color: #ccc;">Installing allows offline access and better performance!</p>
+    <button id="close-modal" style="
+      background: #0078ff;
+      border: none;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 16px;
+    ">Got it!</button>
+  `;
+  
+  modal.appendChild(content);
+  document.body.appendChild(modal);
+  
+  // Close modal
+  const closeBtn = content.querySelector('#close-modal');
+  const closeModal = () => {
+    document.body.removeChild(modal);
+    this.hideInstallButton();
+  };
+  
+  closeBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeModal();
+  });
+}  handleServiceWorkerUpdate() {
     if (this.registration && this.registration.waiting) {
       // New service worker available
       this.showUpdatePrompt();
